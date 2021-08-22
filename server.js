@@ -6,10 +6,11 @@ var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var hbs = require("express-handlebars");
 var Producto = require("./Producto.js");
+const db = require('./db/db')
 var routerProductos = express.Router();
 var PORT = 8080;
 var arrayConectados = [];
-var mensajes = [];
+
 //configuracion de handlebars
 app.engine("hbs", hbs({
     extname: "hbs",
@@ -82,7 +83,7 @@ io.on('connect', async function  (socket) {
    
     io.sockets.emit('productData', { products: data });
     
-    
+    let mensajes = await db.select('*').from('mensajes')
     io.sockets.emit('crearMensaje', mensajes);
 
     
@@ -121,8 +122,9 @@ io.on('connect', async function  (socket) {
         arrayConectados.push(usuario);
         callback(arrayConectados);
     });
-    socket.on("crearMensaje", function (mensaje, callback) {
+    socket.on("crearMensaje", async function (mensaje, callback) {
         //socket.broadcast.emit('crearMensaje', mensaje)
+        await  db.insert(mensaje).into('mensajes')
         mensajes.push(mensaje);
         io.sockets.emit('crearMensaje', mensajes);
     });
