@@ -99,16 +99,13 @@ const editProduct = (id) => {
   $editList.style.display = 'block'
   $addList.style.display = 'none'
   $value.value = id   
-
+  
 }
 
 
 $addList.addEventListener("click", addProduct);
 
 $editList.addEventListener("click",() => {
-
-  
-  
   let id = $value.value
   const data = {
     title: $titleData.value,
@@ -120,9 +117,12 @@ $editList.addEventListener("click",() => {
   $thumbnailData.value = ""
   $value.value = ""
   console.log(data)
-  socket.emit("editProduct", id, data);
   $editList.style.display = 'none'
   $addList.style.display = 'block'
+  socket.emit("editProduct", {
+    id,
+    data
+  });
 })
 
 const enviarmensajes = () => {

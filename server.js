@@ -77,11 +77,11 @@ routerProductos.delete("/borrar/:id", function (req, res) {
 */
 
 
-io.on('connect', function (socket) {
-    let data = prod.listar()
-    data.then(resp => {
-        io.sockets.emit('productData', { products: resp });
-    })
+io.on('connect', async function  (socket) {
+    let data = await prod.listar()
+   
+    io.sockets.emit('productData', { products: data });
+    
     
     io.sockets.emit('crearMensaje', mensajes);
 
@@ -103,8 +103,9 @@ io.on('connect', function (socket) {
         })
     })
 
-    socket.on('editProduct',(id, dataEdit) => {
-        prod.editar(id, dataEdit)
+    socket.on('editProduct', ({id, data}) => {
+        prod.editar(id, data)
+        console.log(id, data)
         let datas = prod.listar()
         datas.then(resp => {
             io.sockets.emit('productData', { products: resp });
@@ -113,7 +114,7 @@ io.on('connect', function (socket) {
 
 
     socket.on("disconnect", function (usuario) {
-        socket.broadcast.emit('crearMensaje', { usuario: "Admin", mensaje: "un usuario se fue", fecha: new Date() });
+        socket.broadcast.emit('crearMensaje', { usuario: "Admin", mensaje: "Un usuario se fue", fecha: new Date() });
     });
     socket.on("entrarChat", function (usuario, callback) {
         usuario.id = socket.id;
