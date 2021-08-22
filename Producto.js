@@ -1,31 +1,36 @@
-let productos = require('./productos')
+const db = require('./db/db')
+
 class Producto {
     constructor(){
 
     }
-    guardar(producto){
-        producto.id = productos.length +1
-        productos.push(producto)
-        return productos
+    async guardar(producto){
+       await  db.insert(producto).into('productos')
+       const productos = await db.select('*').from('productos')
+       let productosParse =  JSON.parse(JSON.stringify(productos))
+       return productosParse
     }
-    listar(){
-        return productos
+    async listar(){
+        const productos = await db.select('*').from('productos')
+        let productosParse =  JSON.parse(JSON.stringify(productos))
+        return productosParse
     }
-    buscarPorId(id){
-        return productos.find((producto) =>  producto.id === id)
+    async buscarPorId(id){
+        const producto = await db.select('*').from('productos').where('id', id)
+        let productoParse =  JSON.parse(JSON.stringify(producto))
+        return productoParse
     }
-    eliminar(id){
-        let eliminado = productos.find((producto) =>  producto.id === id)
-        productos = productos.filter((producto) => producto.id !== id )
-        return eliminado
+    async eliminar(id){
+       await db('productos').where('id', id).del()
+        const productos = await db.select('*').from('productos')
+        let productosParse =  JSON.parse(JSON.stringify(productos))
+        return productosParse
     }
-    editar(id, producto){
-        let editado = productos[id - 1] = {
-            "title": producto.title,
-            "price": producto.price,
-            "thumbnail":producto.thumbnail
-        }
-        return editado
+    async editar(id, {title, price, description}){
+        await db('productos').update({title, price:parseInt(price), description}).where('id', id)
+        const productos = await db.select('*').from('productos')
+        let productosParse =  JSON.parse(JSON.stringify(productos))
+        return productosParse
     }
 }
 module.exports = Producto;

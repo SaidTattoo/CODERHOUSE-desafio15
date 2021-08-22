@@ -83,7 +83,10 @@ routerProductos.delete("/borrar/:id", (req:express.Request, res:express.Response
 
 
 io.on('connect', (socket:any) => {
-  io.sockets.emit('productData', { products: prod.listar()})
+  io.sockets.emit('productData', { 
+    
+    products: prod.listar()
+  })
   io.sockets.emit('crearMensaje',  mensajes)
   socket.on('addNewProduct', (data:any ) => {
       prod.guardar(data)

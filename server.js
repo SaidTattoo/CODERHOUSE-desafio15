@@ -26,22 +26,33 @@ app.use("/api/productos/", routerProductos);
 var prod = new Producto();
 routerProductos.get("/listar", function (req, res) {
     var data = prod.listar();
-    res.json(data.length !== 0
-        ? { productos: data }
-        : { error: "no hay productos cargados" });
+    data
+        .then(resp => {
+            res.json(resp.length !== 0
+                ? { productos: resp }
+                : { error: "no hay productos cargados" });
+        })
 });
 app.get("/productos/vista", function (req, res) {
     var data = prod.listar();
-    res.render("main", data.length !== 0
-        ? { productos: data }
+    data
+        .then(resp => {
+            console.log('RESP',resp)
+        res.render("main", resp.length !== 0
+        ? { productos: resp }
         : { error: "no hay productos cargados" });
+    })
+  
 });
 app.get("/", function (req, res) {
     res.render("crearProducto", { 'products list': prod.listar() });
 });
 routerProductos.get("/listar/:id", function (req, res) {
     var result = prod.buscarPorId(parseInt(req.params.id));
-    res.json(result ? { producto: result } : { error: "producto no encontrado" });
+    result.then(resp => {
+        res.json(resp ? { producto: resp } : { error: "producto no encontrado" });
+    })
+    
 });
 routerProductos.post("/guardar/", function (req, res) {
     var producto = req.body;
@@ -54,18 +65,53 @@ routerProductos.put("/actualizar/:id", function (req, res) {
     var result = prod.editar(parseInt(req.params.id), producto);
     res.json(result);
 });
-routerProductos["delete"]("/borrar/:id", function (req, res) {
+routerProductos.delete("/borrar/:id", function (req, res) {
     var result = prod.eliminar(parseInt(req.params.id));
     res.json(result);
 });
+
+/**
+ * 
+ * sockets
+ * 
+*/
+
+
 io.on('connect', function (socket) {
-    io.sockets.emit('productData', { products: prod.listar() });
+    let data = prod.listar()
+    data.then(resp => {
+        io.sockets.emit('productData', { products: resp });
+    })
+    
     io.sockets.emit('crearMensaje', mensajes);
+
+    
+
     socket.on('addNewProduct', function (data) {
         prod.guardar(data);
-        console.log(data);
-        io.sockets.emit('productData', { products: prod.listar() });
+        let datas = prod.listar()
+        datas.then(resp => {
+            io.sockets.emit('productData', { products: resp });
+        })
     });
+
+    socket.on('deleteProduct',(id) => {
+        prod.eliminar(id);
+        let data = prod.listar()
+        data.then(resp => {
+            io.sockets.emit('productData', { products: resp });
+        })
+    })
+
+    socket.on('editProduct',(id, dataEdit) => {
+        prod.editar(id, dataEdit)
+        let datas = prod.listar()
+        datas.then(resp => {
+            io.sockets.emit('productData', { products: resp });
+        })
+    })
+
+
     socket.on("disconnect", function (usuario) {
         socket.broadcast.emit('crearMensaje', { usuario: "Admin", mensaje: "un usuario se fue", fecha: new Date() });
     });
@@ -83,6 +129,8 @@ io.on('connect', function (socket) {
         socket.broadcast.emit('escribiendo', data);
     });
 });
+
+
 server.listen(PORT, function () {
     console.log("servidor corriendo en en http://localhost:" + PORT);
 });
